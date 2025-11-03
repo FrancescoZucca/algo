@@ -51,7 +51,7 @@ int parseFile(unsigned long long int** vec, const char* filename, int* n, int* e
     }
 
     fscanf(fin, "%d %d", n, e);
-    *vec = malloc(*e * sizeof(unsigned long long int));
+    *vec = calloc(*e, sizeof(unsigned long long int));
 
     for (int i = 0; i < *e; i++) {
         int a,b;
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 
     // free di tutte le strutture
     cache_entry_t* list = head.next;
-    while (list->next != NULL) {
+    while (list != NULL) {
         cache_entry_t* tmp = list;
         list = list->next;
         free(tmp);
