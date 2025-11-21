@@ -1,72 +1,80 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {
+#define FILENAME "lab5/att.txt"
+
+typedef struct{
     int i, f;
 } attivita_t;
 
-void check(attivita_t* V, int* sel, int* res, int pos, int* max, int* p_pos) {
-    int ret = 0;
-    for (int i = 0; i < pos; i++) {
-        ret += V[i].f - V[i].i;
+void check(int* max, int* res, int* sel, attivita_t* vec, int N){
+    int somma = 0;
+    for(int i = 0; i < N; i++) {
+        if (sel[i])
+            somma += vec[i].f - vec[i].i;
     }
-    if (ret > *max) {
-        *max = ret;
-        *p_pos = pos;
-        for (int i = 0; i < pos; i++) {
+    if(somma > *max) {
+        *max = somma;
+        for(int i = 0; i < N; i++) {
             res[i] = sel[i];
         }
     }
 }
 
-int compatible(attivita_t* V, int* sel, int pos, attivita_t a) {
-    for (int i = 0; i < pos; i++) {
-        if (!(V[sel[i]].i < a.f && a.i < V[sel[i]].f)) return 0;
+int promising(int N, attivita_t* vec, int* sel, attivita_t a) {
+    for (int i = 0; i < N; i++) {
+        if (sel[i] && vec[i].i < a.f && a.i < vec[i].f) {
+            return 0;
+        }
     }
-
     return 1;
 }
 
-void attSelR(int N, attivita_t* V, int pos, int* sel, int* res, int* max, int* p_pos) {
-    if (N == 0)
-        return check(V, sel, res, pos, max, p_pos);
-
-    int flag = 1;
-    for (int i = 0; i < N; i++) {
-        if (compatible(V, sel, pos, V[i])) {
-            sel[pos] = i;
-            attSelR(N-1, V, pos, sel, res, max, p_pos);
-            flag = 0;
-        }
+void attSelR(int N, attivita_t* V, int pos, int* res, int* sel, int* max){
+    if (pos >= N) {
+        check(max, res, sel, V, N);
+        return;
     }
 
-    if (!flag) check(V, sel, res, pos, max, p_pos);
+    sel[pos] = 0;
+    attSelR(N, V, pos+1, res, sel, max);
+    if (promising(pos, V, sel, V[pos])) {
+        sel[pos] = 1;
+        attSelR(N, V, pos+1, res, sel, max);
+    }
 }
 
 void attSel(int N, attivita_t* V) {
-    int* sel = malloc(sizeof(int) * N);
-    int* res = malloc(sizeof(int) * N);
-    int max = 0, pos = 0;
-    for (int i = 0; i < N; i++) {
-        *sel = i;
-        attSelR(N-1, V, 1, sel, res, &max, &pos);
+    int max = 0;
+    int* res = malloc(N * sizeof(int));
+    int* sel = malloc(N * sizeof(int)); // 1 = selected, 0 = not selected
+
+    attSelR(N, V, 0, res, sel, &max);
+
+    printf("Somma durate: %d\n", max);
+    for(int i = 0; i < N; i++) {
+        if (res[i])
+            printf("(%d, %d) ", V[i].i, V[i].f);
     }
-    printf("(");
-    for (int i = 0; i < pos; i++) {
-        printf("(%d,%d)", V[sel[i]].i, V[sel[i]].f);
-    }
-    free(sel);
+
     free(res);
+    free(sel);
 }
 
-int main() {
-    const int inizi[] = {1, 2, 2, 3, 5, 6};
-    const int fini[] = {2, 4, 4, 5, 7, 8};
-    attivita_t V[6];
-    for (int i = 0; i < 6; i++) {
-        V[i].i = inizi[i];
-        V[i].f = fini[i];
+int main(){
+    FILE* fin = fopen(FILENAME, "r");
+
+    int N = 0;
+    fscanf(fin, "%d", &N);
+    attivita_t* V = malloc(N * sizeof(attivita_t));
+
+    for(int i = 0; i < N; i++) {
+        fscanf(fin, "%d %d", &V[i].i, &V[i].f);
     }
-    attSel(6, V);
-    return 0;
+
+    fclose(fin);
+
+    attSel(N, V);
+
+    free(V);
 }
