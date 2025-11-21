@@ -43,7 +43,7 @@ unsigned long long int getMask(int vec) {
     return 1ull << vec;
 }
 
-int parseFile(unsigned long long int** vec, const char* filename, int* n, int* e){
+int parseFile(unsigned long long int** vec, const char* filename, unsigned long long int* n, int* e){
     FILE *fin = fopen(filename, "r");
     if(fin == NULL){
       printf("Errore nell'apertura del file %s\n", filename);
@@ -63,7 +63,7 @@ int parseFile(unsigned long long int** vec, const char* filename, int* n, int* e
     return 0;
 }
 
-int countEdges(cache_entry_t* cache, unsigned long long int* vec, unsigned long long int mask, int v, int e){
+countEdges(cache_entry_t* cache, unsigned long long int* vec, unsigned long long int mask, int v, int e){
 
     int count = 0;
 
@@ -103,12 +103,13 @@ int main(int argc, char *argv[]) {
     }
 
     unsigned long long int* vec = NULL;
-    int n, e;
+    unsigned long long int n;
+    int e;
     if (parseFile(&vec, argv[1], &n, &e))
         return -2;
 
     if (n > sizeof(unsigned long long int) * 8) {
-        printf("Troppi vertici! Il massimo è %lu\n", sizeof(unsigned long long int) * 8);
+        printf("Troppi vertici! Il massimo è %llu\n", sizeof(unsigned long long int) * 8);
     }
 
     // utilizzo ogni bit come mask per un vertice. così otteniamo, nel caso di 5 vertici
