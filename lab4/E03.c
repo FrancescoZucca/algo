@@ -13,45 +13,40 @@ typedef enum {
 
 static const char lettere[4] = {'Z', 'R', 'T', 'S'};
 
-void check(pietra_e* sol, pietra_e* result, int* max, int n) {
-    if (n > *max) {
-        *max = n;
-        for (int i = 0; i < n; i++) {
-            result[i] = sol[i];
+void powerset(int pos, pietra_e* collana, int pietre[4], int* max_l, pietra_e* max_sol, int total, int* flag){
+    // choices[pietra % 2] = scelta a, choices[2 + pietra % 2] scelta b
+    static const pietra_e choices[4] = {ZAFFIRO, SMERALDO, RUBINO, TOPAZIO};
+
+    pietra_e pietra_a = choices[collana[pos-1]%2];
+    pietra_e pietra_b = choices[2 + collana[pos-1]%2];
+
+    int sum = pos;
+    for (int i = 0; i < 4; i++) sum += pietre[i];
+    if (sum < *max_l) return;
+
+    if (!pietre[pietra_a] && !pietre[pietra_b]) {
+        if (pos > *max_l){
+            *max_l = pos;
+            for (int i = 0; i < pos; i++) {
+                max_sol[i] = collana[i];
+            }
+            if (pos == total) *flag = 1;
         }
-    }
-}
-
-void lunghezza(pietra_e* collana, int cur, int* max, pietra_e* fin, int pietre[4], int total, int* flag) {
-
-    static const int pa[2] = {ZAFFIRO, SMERALDO};
-    static const int pb[2] = {RUBINO, TOPAZIO};
-
-    pietra_e pietra_a = pa[collana[cur-1]%2];
-    pietra_e pietra_b = pb[collana[cur-1]%2];
-
-    if (cur == total) {
-        *flag = 1;
-        *max = total;
         return;
     }
 
-    if (pietre[pietra_a] > 0) {
+    if(pietre[pietra_a] && !*flag) {
+        collana[pos] = pietra_a;
         pietre[pietra_a]--;
-        collana[cur] = pietra_a;
-        lunghezza(collana, cur+1, max, fin, pietre, total, flag);
-        if (flag) return;
+        powerset(pos+1, collana, pietre, max_l, max_sol, total, flag);
         pietre[pietra_a]++;
     }
-    if (pietre[pietra_b] > 0) {
+
+    if(pietre[pietra_b] && !*flag) {
+        collana[pos] = pietra_b;
         pietre[pietra_b]--;
-        collana[cur] = pietra_b;
-        lunghezza(collana, cur+1, max, fin, pietre, total, flag);
-        if (flag) return;
+        powerset(pos+1, collana, pietre, max_l, max_sol, total, flag);
         pietre[pietra_b]++;
-    }
-    if (!pietre[pietra_a] && !pietre[pietra_b]) {
-        check(collana, fin, max, cur);
     }
 }
 
@@ -70,14 +65,14 @@ int main() {
         if (pietre[i]) {
             pietre[i]--;
             *collana = i;
-            lunghezza(collana, 1, &max, result, pietre, total, &flag);
+            powerset(1, collana, pietre, &max, result, total, &flag);
             pietre[i]++;
         }
     }
 
     printf("%d\n\n", max);
     for (int i = 0; i < max; i++) {
-        printf("%c", lettere[collana[i]]);
+        printf("%c", lettere[result[i]]);
     }
 
     printf("\n");

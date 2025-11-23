@@ -63,7 +63,7 @@ int parseFile(unsigned long long int** vec, const char* filename, unsigned long 
     return 0;
 }
 
-countEdges(cache_entry_t* cache, unsigned long long int* vec, unsigned long long int mask, int v, int e){
+int countEdges(cache_entry_t* cache, unsigned long long int* vec, unsigned long long int mask, int v, int e){
 
     int count = 0;
 
