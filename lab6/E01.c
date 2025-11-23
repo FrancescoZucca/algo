@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FILENAME "lab6/input files/E1/att.txt"
+#define FILENAME "lab6/input files/E1/att3.txt"
 
 typedef struct {
     int i, f;
@@ -45,20 +45,38 @@ void orderList(att_t* list, const int N) {
     free(tmp);
 }
 
-int attSelDP(att_t* list, const int N) {
+void attSelPrint(att_t* list, int* P, int i) {
+    if (P[i] == -1) {
+        printf("[(%d %d), ", list[i].i, list[i].f);
+        return;
+    }
+
+    attSelPrint(list, P, P[i]);
+    printf("(%d %d), ", list[i].i, list[i].f);
+}
+
+void attSelDP(att_t* list, const int N) {
     int* L = malloc(sizeof(int) * N);
     int* P = malloc(sizeof(int) * N);
-    int max = 1;
+    int max = 1, last = 1;
 
-    L[0] = 1; P[0] = -1;
+    L[0] = list->f - list->i; P[0] = -1;
     for (int i = 1; i < N; i++) {
-        L[i] = 1; P[i] = -1;
+        L[i] = list[i].f - list[i].i; P[i] = -1;
         for (int j = 0; j < i; j++) {
-            if (list[i].f <= list[j].i && L[i] //TODO) {
-
+            if (list[j].f <= list[i].i && L[i] < L[j] + list[i].f - list[i].i) {
+                L[i] = L[j] + list[i].f - list[i].i;
+                P[i] = j;
             }
         }
+        if (L[i] > max) {
+            max = L[i];
+            last = i;
+        }
     }
+
+    attSelPrint(list, P, last);
+    printf("]\nDurata: %d", max);
 
     free(L);
     free(P);
