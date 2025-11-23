@@ -6,145 +6,141 @@
 
 typedef struct {
     char colore_o, colore_v;
-    int punti_o, punti_v, usabile;
+    int punti_o, punti_v, ruotata;
 } tessera_t;
 
-void ruota(tessera_t* t) {
-    int p = t-> punti_o;
-    char c = t -> colore_o;
+int punteggio(tessera_t* tessere, int** scacchiera, int R, int C) {
+    int totale = 0;
+    for (int r = 0; r < R; r++) {
+        tessera_t cur = tessere[scacchiera[r][0]];
+        char colore = cur.ruotata ? cur.colore_v : cur.colore_o;
+        int punti = cur.ruotata ? cur.punti_v : cur.punti_o, c;
+        for (c = 1; c < C && ((tessere[scacchiera[r][c]].ruotata ? tessere[scacchiera[r][c]].colore_v : tessere[scacchiera[r][c]].colore_o) == colore); c++) {
+            punti += tessere[scacchiera[r][c]].ruotata ? tessere[scacchiera[r][c]].punti_v : tessere[scacchiera[r][c]].punti_o;
+        }
 
-    t -> colore_o = t -> colore_v;
-    t -> colore_v = c;
+        if (c == C)
+            totale += punti;
+    }
 
-    t -> punti_o = t -> punti_v;
-    t -> punti_v = p;
+    for (int c = 0; c < C; c++) {
+        tessera_t cur = tessere[scacchiera[0][c]];
+        char colore = cur.ruotata ? cur.colore_o : cur.colore_v;
+        int punti = cur.ruotata ? cur.punti_o : cur.punti_v;
+        int r;
+        for (r = 1; r < R && ((tessere[scacchiera[r][c]].ruotata ? tessere[scacchiera[r][c]].colore_o : tessere[scacchiera[r][c]].colore_v) == colore); r++) {
+            punti += tessere[scacchiera[r][c]].ruotata ? tessere[scacchiera[r][c]].punti_o : tessere[scacchiera[r][c]].punti_v;
+        }
+
+        if (r == R)
+            totale += punti;
+    }
+
+
+    return totale;
 }
 
-void check(tessera_t* pedine ,int** scacchiera, tessera_t* res, int R, int C, int *max) {
-    int totale = 0;
-    char *colori_v = malloc(C * sizeof(char));
-    int *punti_v = malloc(C * sizeof(int));
-
-    for (int i = 0; i < R; i++) {
-        char colore_o = pedine[scacchiera[i][0]].colore_o;
-        int subtotale_o = 0;
-        for (int j = 0; j < C; j++) {
-
-            if (i == 0) { // inizializzazione del vettore colori verticali
-                colori_v[j] = pedine[scacchiera[i][j]].colore_v;
-                punti_v[j] = pedine[scacchiera[i][j]].punti_v;
-            } else if (colori_v[j] != 0) {
-                if (pedine[scacchiera[i][j]].colore_v != colori_v[j]) {
-                    colori_v[j] = 0;
-                    punti_v[j] = 0;
-                } else {
-                    punti_v[j] += pedine[scacchiera[i][j]].punti_v;
+void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere, int* mark, int* max, int* sol) {
+    if (pos >= R*C) {
+        int punti = punteggio(tessere, scacchiera, R, C);
+        if (punti > *max) {
+            *max = punti;
+            for (int i = 0; i < R; i++) {
+                for (int j = 0; j < C; j++) {
+                    sol[i*C + j] = scacchiera[i][j];
                 }
             }
-
-            if (i == R-1) {
-                totale += punti_v[j];
-            }
-
-            if (pedine[scacchiera[i][j]].colore_o != colore_o) {
-                subtotale_o = 0;
-                colore_o = 0;
-            } else if (colore_o != 0)
-                subtotale_o += pedine[scacchiera[i][j]].punti_o;
         }
-
-        totale += subtotale_o;
-    }
-
-    if (totale > *max) {
-        *max = totale;
-        for (int i = 0; i < R; i++) {
-            for (int j = 0; j < C; j++) {
-                res[i*C+j] = pedine[scacchiera[i][j]];
-            }
-        }
-    }
-
-    free(colori_v);
-    free(punti_v);
-}
-
-void chooseR(tessera_t* pedine ,int** scacchiera, tessera_t* res, int pos, int R, int C, int T, int *max) {
-    if (pos == R*C) {
-        check(pedine, scacchiera, res, R, C, max);
         return;
     }
 
-    if (scacchiera[pos/C][pos%C] != -1) { // se questo spazio è già stato riempito
-        chooseR(pedine, scacchiera, res, pos+1, R, C, T, max);
-    } else {
+    if (scacchiera[pos/C][pos % C] != -1) {
+        powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol);
+    }
+    else {
         for (int i = 0; i < T; i++) {
-            if (pedine[i].usabile) {
-                pedine[i].usabile = 0;
-                scacchiera[pos/C][pos%C] = i;
-                chooseR(pedine, scacchiera, res, pos+1, R, C, T, max);
-                ruota(&pedine[i]);
-                chooseR(pedine, scacchiera, res, pos+1, R, C, T, max);
-                pedine[i].usabile = 1;
+            if (!mark[i]) {
+                mark[i] = 1;
+                scacchiera[pos/C][pos % C] = i;
+                tessere[i].ruotata = 1;
+                powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol);
+                tessere[i].ruotata = 0;
+                powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol);
+                mark[i] = 0;
+                scacchiera[pos/C][pos % C] = -1;
             }
         }
     }
 }
 
-void choose(tessera_t* pedine, int T, int** scacchiera, int R, int C) {
-    tessera_t* res = malloc(R*C * sizeof(tessera_t));
-    int max = 0;
+void find_opt(int** scacchiera, tessera_t* tessere, int* mark, int T, int R, int C) {
+    int max = -1;
+    int* sol = malloc(sizeof(int) * R*C);
 
-    chooseR(pedine, scacchiera, res, 0, R, C, T, &max);
+    powerset(0, scacchiera, T, R, C, tessere, mark, &max, sol);
 
-    printf("Massimo punti ottenibili: %d\n", max);
+    printf("%d\n", max);
+
     for (int i = 0; i < R; i++) {
         for (int j = 0; j < C; j++) {
-            printf("%c%d%c%d ", res[i*C+j].colore_o, res[i*C+j].punti_o, res[i*C+j].colore_v, res[i*C+j].punti_v);
+            printf("%d/%d ", sol[i*C + j], tessere[sol[i*C + j]].ruotata);
         }
         printf("\n");
     }
 
-    free(res);
+    free(sol);
 }
 
-int main() {
-    FILE* t_fin = fopen(FILENAME_T, "r");
+tessera_t* parseTiles(const char* filename, int* T) {
+    FILE* f = fopen(filename, "r");
 
-    int T;
-    fscanf(t_fin, "%d", &T);
+    fscanf(f, "%d", T);
 
-    tessera_t* pedine = malloc(T * sizeof(tessera_t));
-    for (int i = 0; i < T; i++) {
-        fscanf(t_fin, " %c %d %c %d", &pedine[i].colore_o, &pedine[i].punti_o, &pedine[i].colore_v, &pedine[i].punti_v);
-        pedine[i].usabile = 1;
-    }
+    tessera_t* tessere = malloc(*T * sizeof(tessera_t));
 
-    FILE* b_fin = fopen(FILENAME_B, "r");
+    for (int i = 0; i < *T; i++)
+        fscanf(f, " %c %d %c %d ", &tessere[i].colore_o, &tessere[i].punti_o, &tessere[i].colore_v, &tessere[i].punti_v);
 
-    int R, C, ruotato;
-    fscanf(b_fin, "%d %d", &R, &C);
+    fclose(f);
+    return tessere;
+}
 
-    int** scacchiera = malloc(R * sizeof(int*));
-    for (int i = 0; i < R; i++) {
-        scacchiera[i] = malloc(C * sizeof(int));
-        for (int j = 0; j < C; j++) {
-            fscanf(b_fin, "%d/%d", &scacchiera[i][j], &ruotato);
-            if (scacchiera[i][j] != -1)
-                pedine[scacchiera[i][j]].usabile = 0;
-            if (ruotato)
-                ruota(&pedine[scacchiera[i][j]]);
+int** parseBoard(const char* filename, int* R, int* C, tessera_t* tessere, int* mark) {
+    FILE* f = fopen(filename, "r");
+
+    fscanf(f, "%d %d", R, C);
+
+    int** board = malloc(*R * sizeof(int*));
+
+    for (int i = 0; i < *R; i++) {
+        board[i] = malloc(*C * sizeof(int));
+        for (int j = 0; j < *C; j++) {
+            int ruotata;
+            fscanf(f, "%d/%d", &board[i][j], &ruotata);
+            if (board[i][j] != -1) {
+                tessere[board[i][j]].ruotata = ruotata;
+                mark[board[i][j]] = 1;
+            }
         }
     }
 
-    free(t_fin);
-    free(b_fin);
+    fclose(f);
+    return board;
+}
 
-    choose(pedine, T, scacchiera, R, C);
+#define TILES_FILE "lab5/tiles.txt"
+#define BOARD_FILE "lab5/board.txt"
 
-    free(pedine);
-    for (int i = 0; i < R; i++) {
-        free(scacchiera[i]);
-    }
-    free(scacchiera);
+int main() {
+    int T, R, C;
+    tessera_t* tessere = parseTiles(TILES_FILE, &T);
+    int* mark = calloc(T, sizeof(int));
+    int** board = parseBoard(BOARD_FILE, &R, &C, tessere, mark);
+
+    find_opt(board, tessere, mark, T, R, C);
+
+    free(tessere);
+    for (int i = 0; i < R; i++) free(board[i]);
+    free(board);
+    free(mark);
 }
