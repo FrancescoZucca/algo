@@ -6,7 +6,8 @@
 
 typedef struct {
     char colore_o, colore_v;
-    int punti_o, punti_v, ruotata;
+    int punti_o, punti_v;
+    char ruotata;
 } tessera_t;
 
 int punteggio(tessera_t* tessere, int** scacchiera, int R, int C) {
@@ -40,7 +41,7 @@ int punteggio(tessera_t* tessere, int** scacchiera, int R, int C) {
     return totale;
 }
 
-void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere, int* mark, int* max, int* sol) {
+void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere, int* mark, int* max, int* sol, char* rotations) {
     if (pos >= R*C) {
         int punti = punteggio(tessere, scacchiera, R, C);
         if (punti > *max) {
@@ -48,6 +49,7 @@ void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere
             for (int i = 0; i < R; i++) {
                 for (int j = 0; j < C; j++) {
                     sol[i*C + j] = scacchiera[i][j];
+                    rotations[i*C + j] = tessere[scacchiera[i][j]].ruotata;
                 }
             }
         }
@@ -55,7 +57,7 @@ void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere
     }
 
     if (scacchiera[pos/C][pos % C] != -1) {
-        powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol);
+        powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol, rotations);
     }
     else {
         for (int i = 0; i < T; i++) {
@@ -63,9 +65,9 @@ void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere
                 mark[i] = 1;
                 scacchiera[pos/C][pos % C] = i;
                 tessere[i].ruotata = 1;
-                powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol);
+                powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol, rotations);
                 tessere[i].ruotata = 0;
-                powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol);
+                powerset(pos+1, scacchiera, T, R, C, tessere, mark, max, sol, rotations);
                 mark[i] = 0;
                 scacchiera[pos/C][pos % C] = -1;
             }
@@ -76,14 +78,15 @@ void powerset(int pos, int** scacchiera, int T, int R, int C, tessera_t* tessere
 void find_opt(int** scacchiera, tessera_t* tessere, int* mark, int T, int R, int C) {
     int max = -1;
     int* sol = malloc(sizeof(int) * R*C);
+    char* rotations = malloc(sizeof(char)*R*C);
 
-    powerset(0, scacchiera, T, R, C, tessere, mark, &max, sol);
+    powerset(0, scacchiera, T, R, C, tessere, mark, &max, sol, rotations);
 
     printf("%d\n", max);
 
     for (int i = 0; i < R; i++) {
         for (int j = 0; j < C; j++) {
-            printf("%d/%d ", sol[i*C + j], tessere[sol[i*C + j]].ruotata);
+            printf("%d/%d ", sol[i*C + j], rotations[i*C + j]);
         }
         printf("\n");
     }
