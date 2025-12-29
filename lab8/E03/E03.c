@@ -52,6 +52,31 @@ int main(int argc, char** argp){
                 parse_date(stdin, &date, 1); 
                 printf("Il valore e' %.02lf\n", titolo_value(date, selezionato));
             } break;
+            case 4 : {
+                if (!selezionato) {printf("Necessario selezionare un titolo.\n"); break;}
+                printf("Inserisci data di inizio: <aaaa/mm/gg>\n");
+                datetime_t date_s;
+                parse_date(stdin, &date_s, 1);
+                printf("Inserisci data di fine: <aaaa/mm/gg>\n");
+                datetime_t date_f;
+                parse_date(stdin, &date_f, 1);
+                double min, max;
+                titolo_interval_price(date_s, date_f, selezionato, &min, &max);
+                printf("Il minimo e' %.02lf, il massimo %.02lf.\n", min, max);
+            } break;
+            case 5 : {
+                if (!selezionato) {printf("Necessario selezionare un titolo.\n"); break;}
+                double min, max;
+                titolo_minmax_price(selezionato, &min, &max);
+                printf("Il minimo storico e' %.02lf, il massimo storico %.02lf.\n", min, max);
+            } break;
+            case 6 : {
+                if (!selezionato) {printf("Necessario selezionare un titolo.\n"); break;}
+                printf("Inserisci una soglia: \n");
+                double S;
+                scanf(" %lf", &S);
+                titolo_balance(selezionato, S);
+            } break;
             default : {
                 printf("Opzione non valida.");
             }

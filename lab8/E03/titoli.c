@@ -33,7 +33,8 @@ void titolo_parse(FILE* fp, titolo_t titolo){
 }
 
 double titolo_value(datetime_t date, titolo_t titolo){
-    return QL_search(date, titolo->quotazioni)->price;
+    quote_t* quote = QL_search(date, titolo->quotazioni);
+    return (quote ? quote->price : 0.0);
 }
 
 void titolo_free(titolo_t titolo){
@@ -106,4 +107,14 @@ int listaTitoli_parse(FILE* fp, lista_titoli_t lista){
     }
 
     return n;
+}
+
+void titolo_interval_price(datetime_t date_start, datetime_t date_finish, titolo_t titolo, double* min, double* max){
+    QL_interval_price(date_start, date_finish, titolo->quotazioni, min, max);
+}
+void titolo_minmax_price(titolo_t titolo, double* min, double* max){
+    QL_minmax_price(titolo->quotazioni, min, max);
+}
+void titolo_balance(titolo_t titolo, double S){
+    QL_balance(titolo->quotazioni, S);
 }
